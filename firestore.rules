@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /letters/{letterId} {
+      // Sent letters are meant to be viewed via their share link by
+      // anyone who has it - that's the whole point of "copy the link".
+      // Drafts stay private to their owner.
+      allow read: if resource.data.status == 'sent'
+                  || (request.auth != null && request.auth.uid == resource.data.ownerUid);
+
+      allow create: if request.auth != null
+                    && request.resource.data.ownerUid == request.auth.uid;
+
+      allow update: if
+        // Owner can edit/send/delete-fields freely.
+        (request.auth != null && request.auth.uid == resource.data.ownerUid)
+        // A logged-in recipient can only toggle favorite/opened, not edit content.
+        || (request.auth != null
+            && request.auth.token.email == resource.data.recipientEmail
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['opened', 'favorite']))
+        // Opening a share link works without login - it only flips `opened`.
+        || (resource.data.status == 'sent'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['opened']));
+
+      allow delete: if request.auth != null && request.auth.uid == resource.data.ownerUid;
+    }
+  }
+}
