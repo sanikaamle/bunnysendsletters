@@ -119,7 +119,7 @@ export default function PublicView() {
         <p className="mt-8 text-center text-sm text-ink-soft">
           Want to write one back?{' '}
           <a href="/signup" className="font-medium text-ink underline">
-            Create a free PetalPost account
+            Create a free Bunny account
           </a>
         </p>
       </main>
